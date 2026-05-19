@@ -1915,14 +1915,6 @@ function renderAdminUsers(users) {
   `).join('');
 }
 
-async function adminUnlockDevice(userId) {
-  if (!confirm('Reset device lock for this user?')) return;
-  const { error } = await sb.rpc('admin_reset_device', { p_user_id: userId });
-  if (error) { showToast('Error', error.message, 'error'); return; }
-  showToast('Device unlocked', 'User can now log in from a new device.', 'success');
-  loadAdminUsers();
-}
-
 // ================================================================
 // AUTO-REFRESH DASHBOARD AT MIDNIGHT (local)
 // ================================================================

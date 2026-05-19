@@ -1155,22 +1155,36 @@ html, body {
 
     <!-- ── ADMIN TAB ── -->
     <div id="tab-admin" class="tab-view">
-      <div class="admin-section" id="admin-create-user-section">
-        <div class="admin-section-title">➕ Create New User</div>
-        <div class="form-field">
-          <label class="form-label">Username</label>
-          <input class="form-input" id="new-username" type="text" placeholder="Enter username" autocapitalize="none">
-        </div>
-        <div class="form-field" style="margin-top:12px">
-          <label class="form-label">Password</label>
-          <input class="form-input" id="new-password" type="password" placeholder="Min 8 characters">
-        </div>
-        <button class="btn-primary" id="btn-create-user" style="margin-top:14px">
-          <span class="btn-text">Create User</span>
-          <div class="btn-loader"></div>
-        </button>
-        <div class="error-msg" id="create-user-error"></div>
-      </div>
+
+     <!-- Device Reset -->
+     <div class="admin-section">
+       <div class="admin-section-title">📱 Device Reset</div>
+       <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">
+         User တစ်ယောက် device အသစ်မှာ login ဝင်နိုင်အောင် lock ဖြုတ်ပေးပါ
+       </p>
+       <div class="form-field">
+         <label class="form-label">Username</label>
+         <input class="form-input" id="reset-username" type="text"
+           placeholder="username ထည့်ပါ" autocapitalize="none">
+       </div>
+       <button class="btn-primary" id="btn-device-reset" style="margin-top:14px">
+         <span class="btn-text">🔓 Device Reset လုပ်ပါ</span>
+         <div class="btn-loader"></div>
+       </button>
+       <div class="error-msg" id="reset-error"></div>
+     </div>
+   
+     <!-- User List + Daily Profit -->
+     <div class="admin-section">
+       <div class="admin-section-title">👥 User List — ယနေ့ အမြတ်</div>
+       <div id="admin-user-profit-list">
+         <div class="empty-state">
+           <div class="empty-text">Loading...</div>
+         </div>
+       </div>
+     </div>
+   
+   </div>
 
       <div class="admin-section">
         <div class="admin-section-title">👥 User List</div>
@@ -1437,7 +1451,7 @@ function setupApp() {
   setupFilters();
   loadDashboard();
   loadTransactions();
-  if (currentProfile?.role === 'admin') loadAdminUsers();
+  if (currentProfile?.role === 'admin') loadAdminUserProfit();
 
   // Date display
   const now = new Date();
@@ -1446,7 +1460,90 @@ function setupApp() {
   document.getElementById('month-label').textContent =
     now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
-
+   
+   // ── ADMIN: Device Reset ──
+   document.getElementById('btn-device-reset')?.addEventListener('click', async () => {
+     const username = document.getElementById('reset-username').value.trim();
+     const errEl    = document.getElementById('reset-error');
+     const btn      = document.getElementById('btn-device-reset');
+     errEl.classList.remove('visible');
+   
+     if (!username) {
+       errEl.textContent = 'Username ထည့်ပါ';
+       errEl.classList.add('visible'); return;
+     }
+   
+     btn.classList.add('loading'); btn.disabled = true;
+   
+     const { data, error } = await sb
+       .from('users_profile')
+       .update({ device_id: null })
+       .eq('username', username)
+       .select();
+   
+     btn.classList.remove('loading'); btn.disabled = false;
+   
+     if (error) {
+       errEl.textContent = 'Error: ' + error.message;
+       errEl.classList.add('visible');
+     } else if (!data || data.length === 0) {
+       errEl.textContent = 'Username မတွေ့ဘူး';
+       errEl.classList.add('visible');
+     } else {
+       document.getElementById('reset-username').value = '';
+       showToast('Device Reset ပြီးပါပြီ', username + ' device lock ဖြုတ်ပြီ ✅', 'success');
+     }
+   });
+   
+   // ── ADMIN: User List + Daily Profit ──
+   async function loadAdminUserProfit() {
+     if (currentProfile?.role !== 'admin') return;
+   
+     const listEl = document.getElementById('admin-user-profit-list');
+   
+     const { data: users, error } = await sb
+       .from('users_profile')
+       .select('id, username, role, device_id')
+       .order('created_at', { ascending: true });
+   
+     if (error || !users) {
+       listEl.innerHTML = `<div class="empty-state"><div class="empty-text">Error loading</div></div>`;
+       return;
+     }
+   
+     const now      = new Date();
+     const todayStr = now.toLocaleDateString('en-CA');
+     const fromDt   = new Date(todayStr + 'T00:00:00').toISOString();
+     const toDt     = new Date(todayStr + 'T23:59:59').toISOString();
+   
+     const profitMap = {};
+     await Promise.all(users.map(async (u) => {
+       const { data: txns } = await sb
+         .from('transactions')
+         .select('service_fee_profit')
+         .eq('user_id', u.id)
+         .gte('created_at', fromDt)
+         .lte('created_at', toDt);
+       profitMap[u.id] = (txns || []).reduce((s, t) => s + Number(t.service_fee_profit || 0), 0);
+     }));
+   
+     listEl.innerHTML = users.map(u => `
+       <div class="user-row">
+         <div class="user-avatar">${u.username?.[0]?.toUpperCase() || '?'}</div>
+         <div class="user-info">
+           <div class="user-name">${u.username}</div>
+           <div class="user-device">${u.device_id ? '📱 Device locked' : '🔓 No device'}</div>
+         </div>
+         <span class="user-role-badge ${u.role}">${u.role}</span>
+         <div style="text-align:right">
+           <div style="font-size:13px;color:var(--green);font-weight:700">
+             Ks ${fmt(profitMap[u.id])}
+           </div>
+           <div style="font-size:11px;color:var(--text3)">ယနေ့</div>
+         </div>
+       </div>
+     `).join('');
+   }
 // ================================================================
 // TABS
 // ================================================================

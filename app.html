@@ -1241,13 +1241,13 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
 // PAYMENT METHODS CONFIG
 // ================================================================
 const PAYMENT_METHODS = [
-  { key: 'KBZPay',   label: 'KBZ Pay',   cls: 'kbz',  color: '#e31e26', abbr: 'KBZ'  },
-  { key: 'CBPay',    label: 'CB Pay',    cls: 'cb',   color: '#0066b3', abbr: 'CB'   },
-  { key: 'WavePay',  label: 'Wave Pay',  cls: 'wave', color: '#7b2d8b', abbr: 'WV'   },
-  { key: 'AYAPay',   label: 'AYA Pay',   cls: 'aya',  color: '#c8a84b', abbr: 'AYA'  },
-  { key: 'OKDollar', label: 'OK Dollar', cls: 'ok',   color: '#00a94f', abbr: 'OK'   },
-  { key: 'MPitesan', label: 'M-Pitesan', cls: 'mpi',  color: '#1a56db', abbr: 'MPI'  },
-  { key: 'MytelPay', label: 'Mytel Pay', cls: 'mytel', color: '#e2001a', abbr: 'MYT' },
+  { key: 'KBZPay',   label: 'KBZ Pay',   cls: 'kbz',   color: '#1a56c4', abbr: 'KBZ', logo: 'kbz.jpg'      },
+  { key: 'CBPay',    label: 'CB Pay',     cls: 'cb',    color: '#1a7ef5', abbr: 'CB',  logo: 'cb.jpg'       },
+  { key: 'WavePay',  label: 'Wave Pay',   cls: 'wave',  color: '#f5c800', abbr: 'WV',  logo: 'wave.jpg'     },
+  { key: 'AYAPay',   label: 'AYA Pay',    cls: 'aya',   color: '#cc0000', abbr: 'AYA', logo: 'aya.jpg'      },
+  { key: 'OKDollar', label: 'OK Dollar',  cls: 'ok',    color: '#d4a000', abbr: 'OK',  logo: 'ok.jpg'       },
+  { key: 'MPitesan', label: 'M-Pitesan',  cls: 'mpi',   color: '#cc0000', abbr: 'MPI', logo: 'mpitesan.jpg' },
+  { key: 'MytelPay', label: 'Mytel Pay',  cls: 'mytel', color: '#d4007a', abbr: 'MYT', logo: 'mytelpay.jpg' },
 ];
 
 // ================================================================
@@ -1461,8 +1461,8 @@ function setupTabs() {
 function setupPaymentDropdown() {
   const dropdown = document.getElementById('pay-dropdown');
   dropdown.innerHTML = PAYMENT_METHODS.map(pm => `
-    <div class="payment-option" data-key="${pm.key}" data-cls="${pm.cls}" data-color="${pm.color}" data-abbr="${pm.abbr}" data-label="${pm.label}">
-      <div class="payment-option-logo" style="background:${pm.color}">${pm.abbr}</div>
+    <div class="payment-option" data-key="${pm.key}" data-cls="${pm.cls}" data-color="${pm.color}" data-abbr="${pm.abbr}" data-logo="${pm.logo}" data-label="${pm.label}">
+      <img src="${pm.logo}" alt="${pm.label}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;">
       <span class="payment-option-name">${pm.label}</span>
     </div>
   `).join('');
@@ -1488,8 +1488,7 @@ function setupPaymentDropdown() {
       hiddenIn.value       = key;
       selectTx.textContent = label;
       selectTx.classList.add('chosen');
-      preview.style.background = color;
-      preview.textContent  = abbr;
+      preview.innerHTML = `<img src="${opt.dataset.logo || ''}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;">`;
       preview.classList.remove('empty');
 
       ddEl.classList.remove('open');
@@ -1604,7 +1603,7 @@ function renderPaymentGrid() {
     const pmProfit = pmTxns.reduce((s, tx) => s + Number(tx.service_fee_profit || 0), 0);
     return `
       <div class="payment-card" data-method="${pm.key}">
-        <div class="payment-logo ${pm.cls}">${pm.abbr}</div>
+        <img src="${pm.logo}" alt="${pm.label}" style="width:42px;height:42px;border-radius:12px;object-fit:cover;flex-shrink:0;">
         <div class="payment-info">
           <div class="payment-name">${pm.label}</div>
           <div class="payment-count">${pmTxns.length} transactions</div>
@@ -1693,7 +1692,7 @@ function renderTxItem(tx) {
   });
   return `
     <div class="tx-item">
-      <div class="tx-logo" style="background:${pm?.color || '#888'}">${pm?.abbr || '??'}</div>
+      <img src="${pm?.logo || ''}" alt="${pm?.label}" style="width:40px;height:40px;border-radius:12px;object-fit:cover;flex-shrink:0;">
       <div class="tx-info">
         <div class="tx-phone">${tx.receiver_phone}</div>
         <div class="tx-method">${pm?.label || tx.payment_method}</div>

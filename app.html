@@ -1923,51 +1923,6 @@ async function adminUnlockDevice(userId) {
   loadAdminUsers();
 }
 
-// Create user (Admin)
-document.getElementById('btn-create-user').addEventListener('click', async () => {
-  const username = document.getElementById('new-username').value.trim();
-  const password = document.getElementById('new-password').value;
-  const errEl    = document.getElementById('create-user-error');
-  const btn      = document.getElementById('btn-create-user');
-  errEl.classList.remove('visible');
-
-  if (!username || !password) {
-    errEl.textContent = 'Both fields are required.';
-    errEl.classList.add('visible'); return;
-  }
-  if (password.length < 8) {
-    errEl.textContent = 'Password must be at least 8 characters.';
-    errEl.classList.add('visible'); return;
-  }
-
-  btn.classList.add('loading'); btn.disabled = true;
-
-  const session = (await sb.auth.getSession()).data.session;
-  const resp = await fetch(`${EDGE_FN_URL}/admin-create-user`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${session.access_token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ username, password })
-  });
-
-  const result = await resp.json();
-  btn.classList.remove('loading'); btn.disabled = false;
-
-  if (!resp.ok) {
-    errEl.textContent = result.error === 'USERNAME_EXISTS'
-      ? 'This username is already taken.'
-      : result.error;
-    errEl.classList.add('visible');
-  } else {
-    showToast('User created', `@${username} has been added.`, 'success');
-    document.getElementById('new-username').value = '';
-    document.getElementById('new-password').value = '';
-    loadAdminUsers();
-  }
-});
-
 // ================================================================
 // AUTO-REFRESH DASHBOARD AT MIDNIGHT (local)
 // ================================================================

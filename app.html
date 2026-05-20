@@ -1932,6 +1932,7 @@ function scheduleMidnightRefresh() {
 // REALTIME SUBSCRIPTION — Live updates from Supabase
 // ================================================================
 function setupRealtime() {
+  try {
   sb.channel('public:transactions')
     .on('postgres_changes', {
       event: 'INSERT',
@@ -1945,7 +1946,7 @@ function setupRealtime() {
       }
     })
     .subscribe();
-}
+  } catch(e) { console.log('Realtime error:', e); }
 
 // ================================================================
 // KICK OFF

@@ -1242,7 +1242,7 @@ const EDGE_FN_URL   = `${SUPABASE_URL}/functions/v1`;
 // SUPABASE CLIENT
 // ================================================================
 const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
+window.sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,

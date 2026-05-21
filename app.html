@@ -639,7 +639,10 @@ function setupPaymentDropdown() {
 function setupForm() {
   const p=document.getElementById('form-principal'), f=document.getElementById('form-fee');
   function recalc() {
-    const pv=parseFloat(p.value)||0, fv=parseFloat(f.value)||0, fee=pv*fv/100;
+    const pv=parseFloat(p.value)||0;
+    const fStr=f.value;
+    const fv=fStr===''||fStr==='.'||fStr.endsWith('.')?0:parseFloat(fStr)||0;
+    const fee=pv*fv/100;
     document.getElementById('calc-fee').textContent='Ks '+fmt(fee);
     document.getElementById('calc-total').textContent='Ks '+fmt(pv+fee);
   }
@@ -743,9 +746,10 @@ document.getElementById('btn-confirm-form').addEventListener('click', async () =
   const ref=document.getElementById('form-ref').value.trim();
   const payment=document.getElementById('form-payment').value;
   const principal=parseFloat(document.getElementById('form-principal').value);
-  const fee=parseFloat(document.getElementById('form-fee').value);
+  const feeStr=document.getElementById('form-fee').value;
+  const fee=parseFloat(feeStr);
   const btn=document.getElementById('btn-confirm-form');
-  if (!phone||!ref||!payment||isNaN(principal)||principal<=0||isNaN(fee)||fee<0) {
+  if (!phone||!ref||!payment||isNaN(principal)||principal<=0||feeStr===''||isNaN(fee)||fee<0) {
     showToast('ထည့်သွင်းချက် မပြည့်မစုံ','ကွက်လပ်များ အားလုံး ဖြည့်ပါ','error'); return;
   }
   btn.disabled=true;

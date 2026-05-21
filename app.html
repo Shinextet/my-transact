@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TransactPro — မြန်မာ Transaction Manager</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TransactPro">
+<link rel="apple-touch-icon" href="logo.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #151820;
+  --surface: #1a1d27;
+  --surface2: #202436;
+  --surface3: #252840;
+  --border: #2a2f42;
+  --border2: #333855;
+  --accent: #6c8ef5;
+  --accent2: #a78bfa;
+  --accent3: #34d399;
+  --green: #34d399;
+  --green2: #059669;
+  --red: #f87171;
+  --amber: #fbbf24;
+  --pink: #f472b6;
+  --blue: #60a5fa;
+  --text: #e8ecf4;
+  --text2: #8b93a8;
+  --text3: #4a5268;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  --shadow-sm: 0 2px 12px rgba(0,0,0,0.3);
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-my: 'Noto Sans Myanmar', sans-serif;
+  --glow-accent: 0 0 20px rgba(108,142,245,0.15);
+  --glow-green: 0 0 20px rgba(52,211,153,0.15);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--font-body); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+/* ── Tap Animation ── */
+.tap-scale { transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s; -webkit-tap-highlight-color: transparent; }
+.tap-scale:active { transform: scale(0.94); opacity: 0.85; }
+.tap-ripple { position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+.tap-ripple::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(255,255,255,0.08) 0%, transparent 70%); opacity: 0; transition: opacity 0.3s; border-radius: inherit; }
+.tap-ripple:active::after { opacity: 1; }
+
+/* ── Screens ── */
+.screen { display: none; min-height: 100dvh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ── Login ── */
+#screen-login { background: var(--bg); align-items: center; justify-content: center; padding: 24px; position: relative; overflow: hidden; }
+.login-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 20%, rgba(108,142,245,0.08) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(167,139,250,0.08) 0%, transparent 60%); pointer-events: none; }
+.login-card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 36px 28px; position: relative; z-index: 1; box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.04); animation: fadeSlideUp 0.5s cubic-bezier(0.23,1,0.32,1) forwards; }
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(28px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+.logo-icon { width: 46px; height: 46px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 16px rgba(108,142,245,0.3); }
+.logo-text { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.logo-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.login-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.login-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; }
+.field-group { margin-bottom: 16px; }
+.field-label { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
+.field-input { width: 100%; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 13px 16px; font-size: 15px; font-family: var(--font-body); color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; }
+.field-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,142,245,0.12); background: var(--surface2); }
+.field-input::placeholder { color: var(--text3); }
+.btn-login-wrap { margin-top: 8px; }
+.btn-primary { width: 100%; padding: 15px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 700; color: #fff; cursor: pointer; position: relative; overflow: hidden; transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s, box-shadow 0.2s; box-shadow: 0 4px 20px rgba(108,142,245,0.3); -webkit-tap-highlight-color: transparent; }
+.btn-primary:active { transform: scale(0.96); opacity: 0.9; box-shadow: 0 2px 8px rgba(108,142,245,0.2); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary .btn-loader { display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto; }
+.btn-primary.loading .btn-text { display: none; }
+.btn-primary.loading .btn-loader { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-msg { display: none; background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25); border-radius: var(--radius-sm); padding: 11px 14px; font-size: 13px; color: #fca5a5; margin-top: 12px; }
+.error-msg.visible { display: block; animation: fadeSlideUp 0.2s ease; }
+.login-note { text-align: center; font-size: 12px; color: var(--text3); margin-top: 20px; font-family: var(--font-my); }
+
+/* ── App Shell ── */
+#screen-app { flex-direction: column; background: var(--bg); }
+.topbar { background: rgba(26,29,39,0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.topbar-logo { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.topbar-title { font-size: 16px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.icon-btn { width: 34px; height: 34px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+.icon-btn:active { transform: scale(0.9); background: var(--surface3); }
+
+/* ── Tab Bar ── */
+.tabbar { background: rgba(26,29,39,0.97); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border); display: flex; position: sticky; bottom: 0; z-index: 100; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0 12px; cursor: pointer; font-size: 10px; font-weight: 600; color: var(--text3); transition: color 0.2s; gap: 4px; -webkit-tap-highlight-color: transparent; position: relative; }
+.tab-item.active { color: var(--accent); }
+.tab-item .tab-icon { font-size: 20px; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+.tab-item.active .tab-icon { transform: scale(1.15); }
+.tab-indicator { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 32px; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 0 0 4px 4px; opacity: 0; transition: opacity 0.2s; }
+.tab-item.active .tab-indicator { opacity: 1; }
+
+/* ── Content ── */
+.main-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 16px; }
+.tab-view { display: none; padding: 18px 16px; }
+.tab-view.active { display: block; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.section-title { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 12px; }
+
+/* ── Hero Card ── */
+.hero-card { background: linear-gradient(135deg, #1a2540 0%, #1e1a35 50%, #1a2530 100%); border: 1px solid rgba(108,142,245,0.2); border-radius: 22px; padding: 22px 20px; margin-bottom: 14px; position: relative; overflow: hidden; box-shadow: var(--glow-accent); }
+.hero-card::before { content: ''; position: absolute; top: -40px; right: -40px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(108,142,245,0.12) 0%, transparent 70%); pointer-events: none; }
+.hero-card::after { content: ''; position: absolute; bottom: -30px; left: -30px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(167,139,250,0.1) 0%, transparent 70%); pointer-events: none; }
+.hero-label { font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 10px; display: flex; align-items: center; gap: 7px; position: relative; z-index: 1; }
+.live-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px rgba(52,211,153,0.6); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.4)} }
+.hero-amount { font-size: 40px; font-weight: 800; letter-spacing: -2px; color: #fff; position: relative; z-index: 1; line-height: 1; }
+.hero-currency { font-size: 18px; font-weight: 500; color: rgba(255,255,255,0.4); margin-right: 2px; vertical-align: middle; }
+.hero-date { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 10px; position: relative; z-index: 1; }
+
+/* ── Stat Cards ── */
+.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; position: relative; overflow: hidden; }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: var(--radius) var(--radius) 0 0; }
+.stat-card.monthly::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.stat-card.txcount::before { background: linear-gradient(90deg, var(--green), #059669); }
+.stat-label { font-size: 11px; color: var(--text2); margin-bottom: 8px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+.stat-value { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.stat-sub { font-size: 10px; color: var(--text3); margin-top: 4px; }
+
+/* ── Filter Card ── */
+.filter-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+.filter-title { font-size: 13px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; color: var(--text2); }
+.filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.filter-field label { font-size: 10px; color: var(--text3); display: block; margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+.filter-field input { width: 100%; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; color: var(--text); font-family: var(--font-body); outline: none; transition: border-color 0.2s; }
+.filter-field input:focus { border-color: var(--accent); }
+.filter-field input::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+.btn-filter { width: 100%; padding: 12px; background: linear-gradient(135deg, rgba(108,142,245,0.12), rgba(167,139,250,0.12)); border: 1.5px solid rgba(108,142,245,0.25); border-radius: var(--radius-sm); color: var(--accent); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+.btn-filter:active { transform: scale(0.97); background: rgba(108,142,245,0.2); }
+.filter-result { background: linear-gradient(135deg, rgba(52,211,153,0.06), rgba(52,211,153,0.02)); border: 1px solid rgba(52,211,153,0.2); border-radius: var(--radius-sm); padding: 14px; margin-top: 12px; display: none; animation: fadeSlideUp 0.2s ease; }
+.filter-result.visible { display: block; }
+.filter-result-label { font-size: 11px; color: var(--green); margin-bottom: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+.filter-result-value { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+
+/* ── Payment Grid ── */
+.payment-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.payment-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden; }
+.payment-card::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.03); opacity: 0; transition: opacity 0.15s; }
+.payment-card:active { transform: scale(0.97); border-color: var(--border2); background: var(--surface2); }
+.payment-card:active::after { opacity: 1; }
+.payment-info { flex: 1; min-width: 0; }
+.payment-name { font-size: 13px; font-weight: 700; }
+.payment-count { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.payment-amount { font-size: 15px; font-weight: 800; color: var(--green); white-space: nowrap; }
+.payment-arrow { color: var(--text3); font-size: 14px; }
+
+/* ── Form ── */
+.form-header { text-align: center; padding: 4px 0 18px; }
+.form-header-title { font-size: 20px; font-weight: 800; background: linear-gradient(135deg, var(--text), var(--text2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.form-header-sub { font-size: 12px; color: var(--text3); margin-top: 4px; font-family: var(--font-my); }
+.form-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; }
+.form-section-title { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.form-field { margin-bottom: 14px; }
+.form-field:last-child { margin-bottom: 0; }
+.form-label { font-size: 11px; font-weight: 700; color: var(--text2); display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px; }
+.form-input { width: 100%; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 13px 16px; font-size: 15px; color: var(--text); font-family: var(--font-body); outline: none; transition: all 0.2s; -webkit-appearance: none; }
+.form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,142,245,0.1); background: var(--surface2); }
+.form-input::placeholder { color: var(--text3); }
+
+/* Payment Selector */
+.payment-select-wrapper { position: relative; }
+.payment-select-display { display: flex; align-items: center; gap: 12px; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 16px; cursor: pointer; transition: all 0.2s; min-height: 50px; -webkit-tap-highlight-color: transparent; }
+.payment-select-display.open { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,142,245,0.1); background: var(--surface2); }
+.select-logo-preview { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.select-logo-preview.empty { background: var(--border2); }
+.select-text { flex: 1; font-size: 15px; color: var(--text3); }
+.select-text.chosen { color: var(--text); font-weight: 600; }
+.select-chevron { color: var(--text3); font-size: 11px; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+.payment-select-display.open .select-chevron { transform: rotate(180deg); }
+.payment-dropdown { display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--surface); border: 1.5px solid var(--border2); border-radius: var(--radius); overflow: hidden; z-index: 50; box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+.payment-dropdown.open { display: block; animation: dropIn 0.18s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes dropIn { from { opacity: 0; transform: translateY(-10px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.payment-option { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; transition: background 0.12s; border-bottom: 1px solid var(--border); -webkit-tap-highlight-color: transparent; }
+.payment-option:last-child { border-bottom: none; }
+.payment-option:active { background: var(--surface2); }
+.payment-option-name { font-size: 14px; font-weight: 600; }
+
+/* Calc Fields */
+.calc-fields { background: linear-gradient(135deg, rgba(52,211,153,0.05), rgba(52,211,153,0.02)); border: 1px solid rgba(52,211,153,0.15); border-radius: var(--radius); padding: 16px; margin-top: 12px; }
+.calc-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(52,211,153,0.08); }
+.calc-row:last-child { border-bottom: none; }
+.calc-label { font-size: 12px; color: var(--text2); }
+.calc-value { font-size: 15px; font-weight: 800; color: var(--green); }
+.calc-value.total { font-size: 18px; color: var(--text); }
+
+/* Action Buttons */
+.action-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-top: 4px; padding-bottom: 16px; }
+.btn-cancel { padding: 15px; background: var(--surface); border: 1.5px solid var(--border2); border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; color: var(--text2); cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+.btn-cancel:active { transform: scale(0.96); background: var(--surface2); }
+.btn-confirm { padding: 15px; background: linear-gradient(135deg, var(--green), var(--green2)); border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 800; color: #fff; cursor: pointer; transition: all 0.15s cubic-bezier(0.34,1.56,0.64,1); display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 20px rgba(52,211,153,0.25); -webkit-tap-highlight-color: transparent; }
+.btn-confirm:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(52,211,153,0.15); }
+.btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Transactions ── */
+.tx-filters { display: flex; gap: 7px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.tx-filters::-webkit-scrollbar { display: none; }
+.tx-filter-chip { padding: 7px 14px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 700; color: var(--text2); cursor: pointer; white-space: nowrap; transition: all 0.15s cubic-bezier(0.34,1.56,0.64,1); flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+.tx-filter-chip:active { transform: scale(0.93); }
+.tx-filter-chip.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; color: #fff; box-shadow: 0 3px 12px rgba(108,142,245,0.3); }
+.tx-list { display: flex; flex-direction: column; gap: 8px; }
+.tx-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 14px; display: flex; align-items: center; gap: 12px; transition: all 0.15s; -webkit-tap-highlight-color: transparent; cursor: pointer; }
+.tx-item:active { transform: scale(0.98); background: var(--surface2); }
+.tx-info { flex: 1; min-width: 0; }
+.tx-phone { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tx-ref { font-size: 10px; background: rgba(108,142,245,0.12); color: var(--accent); padding: 2px 7px; border-radius: 6px; font-weight: 700; letter-spacing: 0.5px; flex-shrink: 0; }
+.tx-method { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.tx-time { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.tx-amounts { text-align: right; flex-shrink: 0; }
+.tx-profit { font-size: 14px; font-weight: 800; color: var(--green); }
+.tx-total { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.empty-state { text-align: center; padding: 60px 20px; }
+.empty-icon { font-size: 44px; margin-bottom: 14px; opacity: 0.5; }
+.empty-text { font-size: 15px; font-weight: 600; color: var(--text2); }
+.empty-sub { font-size: 12px; color: var(--text3); margin-top: 6px; font-family: var(--font-my); }
+
+/* ── Admin ── */
+.admin-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; }
+.admin-section-title { font-size: 14px; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.user-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); transition: all 0.15s; }
+.user-row:last-child { border-bottom: none; }
+.user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; flex-shrink: 0; color: #fff; }
+.user-info { flex: 1; }
+.user-name { font-size: 13px; font-weight: 700; }
+.user-device { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.user-role-badge { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 700; flex-shrink: 0; }
+.user-role-badge.admin { background: rgba(251,191,36,0.12); color: var(--amber); }
+.user-role-badge.user { background: rgba(108,142,245,0.12); color: var(--accent); }
+
+/* ── Toast ── */
+#toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; width: calc(100% - 32px); max-width: 360px; }
+.toast { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 13px 16px; display: flex; align-items: center; gap: 10px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); animation: toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; margin-bottom: 8px; }
+.toast.hiding { animation: toastOut 0.2s ease-in forwards; }
+.toast.success { border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.08); }
+.toast.error { border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.08); }
+.toast-icon { font-size: 18px; flex-shrink: 0; }
+.toast-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.toast-msg { font-size: 11px; color: var(--text2); margin-top: 2px; font-family: var(--font-my); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(-16px) scale(0.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes toastOut { to { opacity: 0; transform: translateY(-8px) scale(0.96); } }
+
+/* ── Modal ── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 500; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); align-items: flex-end; justify-content: center; }
+.modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+.modal-sheet { background: var(--surface); border-radius: 24px 24px 0 0; border-top: 1px solid var(--border); width: 100%; max-width: 600px; max-height: 82dvh; display: flex; flex-direction: column; animation: sheetUp 0.3s cubic-bezier(0.32,0.72,0,1) forwards; }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 32px; height: 3px; background: var(--border2); border-radius: 2px; margin: 10px auto 0; }
+.modal-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 16px; font-weight: 800; }
+.modal-close { width: 30px; height: 30px; background: var(--surface2); border: none; border-radius: 8px; cursor: pointer; font-size: 16px; color: var(--text2); display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; transition: all 0.15s; }
+.modal-close:active { transform: scale(0.9); background: var(--surface3); }
+.modal-body { overflow-y: auto; padding: 14px 18px; flex: 1; }
+
+/* ── Loading ── */
+#screen-loading { background: var(--bg); align-items: center; justify-content: center; }
+.loading-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.loading-spinner { width: 44px; height: 44px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.loading-text { font-size: 13px; color: var(--text3); font-weight: 600; }
+
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div id="screen-loading" class="screen active">
+  <div class="loading-wrap">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading...</div>
+  </div>
+</div>
+
+<div id="screen-login" class="screen">
+  <div class="login-bg"></div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">💸</div>
+      <div>
+        <div class="logo-text">TransactPro</div>
+        <div class="logo-sub">Myanmar Payments Manager</div>
+      </div>
+    </div>
+    <h1 class="login-title">Welcome back 👋</h1>
+    <p class="login-sub">သင့် account သို့ ဝင်ရောက်ပါ</p>
+    <div class="field-group">
+      <label class="field-label" for="login-username">Username</label>
+      <input class="field-input" id="login-username" type="text" placeholder="username ထည့်ပါ" autocomplete="username" autocapitalize="none">
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="login-password">Password</label>
+      <input class="field-input" id="login-password" type="password" placeholder="password ထည့်ပါ" autocomplete="current-password">
+    </div>
+    <div class="btn-login-wrap">
+      <button class="btn-primary" id="btn-login">
+        <span class="btn-text">Sign In →</span>
+        <div class="btn-loader"></div>
+      </button>
+    </div>
+    <div class="error-msg" id="login-error"></div>
+    <p class="login-note">မှတ်ပုံတင်ခြင်းအတွက် Admin ကို ဆက်သွယ်ပါ</p>
+  </div>
+</div>
+
+<div id="screen-app" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">💸</div>
+      <span class="topbar-title">TransactPro</span>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-btn" id="btn-logout">🚪</div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-view active">
+      <div class="hero-card">
+        <div class="hero-label"><span class="live-dot"></span>ယနေ့ အမြတ် — Today's Profit</div>
+        <div class="hero-amount"><span class="hero-currency">Ks </span><span id="today-profit">0.00</span></div>
+        <div class="hero-date" id="today-date-display"></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card monthly">
+          <div class="stat-label">📅 Monthly</div>
+          <div class="stat-value" id="monthly-profit" style="color:var(--accent)">0.00</div>
+          <div class="stat-sub" id="month-label"></div>
+        </div>
+        <div class="stat-card txcount">
+          <div class="stat-label">📊 Today Txns</div>
+          <div class="stat-value" id="today-txn-count">0</div>
+          <div class="stat-sub">transactions</div>
+        </div>
+      </div>
+      <div class="filter-card">
+        <div class="filter-title">🔍 Date Range Filter</div>
+        <div class="filter-row">
+          <div class="filter-field"><label>From</label><input type="date" id="filter-from"></div>
+          <div class="filter-field"><label>To</label><input type="date" id="filter-to"></div>
+        </div>
+        <button class="btn-filter" id="btn-filter">🔍 Filter လုပ်ပါ</button>
+        <div class="filter-result" id="filter-result">
+          <div class="filter-result-label">Profit in Range</div>
+          <div class="filter-result-value">Ks <span id="filter-profit">0.00</span></div>
+          <div class="stat-sub" style="margin-top:4px" id="filter-count"></div>
+        </div>
+      </div>
+      <p class="section-title">Payment Methods</p>
+      <div class="payment-grid" id="payment-grid"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="tab-transactions" class="tab-view">
+      <p class="section-title">Transaction History</p>
+      <div class="tx-filters" id="tx-filter-chips">
+        <div class="tx-filter-chip active" data-filter="All">All</div>
+        <div class="tx-filter-chip" data-filter="KBZPay">KBZPay</div>
+        <div class="tx-filter-chip" data-filter="CBPay">CBPay</div>
+        <div class="tx-filter-chip" data-filter="WavePay">WavePay</div>
+        <div class="tx-filter-chip" data-filter="AYAPay">AYAPay</div>
+        <div class="tx-filter-chip" data-filter="OKDollar">OKDollar</div>
+        <div class="tx-filter-chip" data-filter="MPitesan">MPitesan</div>
+        <div class="tx-filter-chip" data-filter="MytelPay">MytelPay</div>
+      </div>
+      <div class="tx-list" id="tx-list"></div>
+    </div>
+
+    <!-- NEW TRANSACTION -->
+    <div id="tab-new" class="tab-view">
+      <div class="form-header">
+        <div class="form-header-title">New Transaction</div>
+        <div class="form-header-sub">ငွေလွှဲမှတ်တမ်း သွင်းရန်</div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Receiver Details</div>
+        <div class="form-field">
+          <label class="form-label" for="form-phone">Receiver Phone</label>
+          <input class="form-input" id="form-phone" type="tel" placeholder="09xxxxxxxxx">
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="form-ref">Transaction ID (နောက်ဆုံး 6 လုံး)</label>
+          <input class="form-input" id="form-ref" type="text" placeholder="ဥပမာ: 123456" maxlength="6" style="letter-spacing:2px;font-size:18px;font-weight:700">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Payment Method</label>
+          <div class="payment-select-wrapper">
+            <div class="payment-select-display" id="pay-select-display">
+              <div class="select-logo-preview empty" id="select-logo-preview"></div>
+              <span class="select-text" id="select-text">Select payment method</span>
+              <span class="select-chevron">▼</span>
+            </div>
+            <div class="payment-dropdown" id="pay-dropdown"></div>
+            <input type="hidden" id="form-payment" value="">
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Amount Details</div>
+        <div class="form-field">
+          <label class="form-label" for="form-principal">Principal Amount (Ks)</label>
+          <input class="form-input" id="form-principal" type="number" placeholder="0" min="0" step="any">
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="form-fee">Fee Percentage (%)</label>
+          <input class="form-input" id="form-fee" type="number" placeholder="e.g. 1.5" min="0" step="any">
+        </div>
+        <div class="calc-fields">
+          <div class="calc-row"><span class="calc-label">💰 Service Fee / Profit</span><span class="calc-value" id="calc-fee">Ks 0.00</span></div>
+          <div class="calc-row"><span class="calc-label">💳 Total Payable</span><span class="calc-value total" id="calc-total">Ks 0.00</span></div>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn-cancel" id="btn-cancel-form">✕ Cancel</button>
+        <button class="btn-confirm" id="btn-confirm-form">✓ Confirm</button>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div id="tab-admin" class="tab-view">
+      <div class="admin-section">
+        <div class="admin-section-title">📱 Device Reset</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:14px;font-family:var(--font-my)">User တစ်ယောက် device အသစ်မှာ login ဝင်နိုင်အောင် lock ဖြုတ်ပေးပါ</p>
+        <div class="form-field">
+          <label class="form-label">Username</label>
+          <input class="form-input" id="reset-username" type="text" placeholder="username ထည့်ပါ" autocapitalize="none">
+        </div>
+        <button class="btn-primary" id="btn-device-reset" style="margin-top:12px">
+          <span class="btn-text">🔓 Device Reset လုပ်ပါ</span>
+          <div class="btn-loader"></div>
+        </button>
+        <div class="error-msg" id="reset-error"></div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">👥 User List — ယနေ့ အမြတ်</div>
+        <div id="admin-user-profit-list"><div class="empty-state"><div class="empty-text">Loading...</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab-item active" data-tab="dashboard">
+      <div class="tab-indicator"></div>
+      <span class="tab-icon">📊</span>Dashboard
+    </div>
+    <div class="tab-item" data-tab="transactions">
+      <div class="tab-indicator"></div>
+      <span class="tab-icon">📋</span>History
+    </div>
+    <div class="tab-item" data-tab="new">
+      <div class="tab-indicator"></div>
+      <span class="tab-icon">➕</span>New
+    </div>
+    <div class="tab-item" id="tab-admin-btn" style="display:none" data-tab="admin">
+      <div class="tab-indicator"></div>
+      <span class="tab-icon">⚙️</span>Admin
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Transactions</div>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const SUPABASE_URL  = 'https://onenfdaddikacglvayvg.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uZW5mZGFkZGlrYWNnbHZheXZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NjkwNDEsImV4cCI6MjA4OTA0NTA0MX0.qIOA3WUUUS5pP8R8wF3DjPDyxvzeW6w3ifGOWwT7feI';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'txpro_session' }
+});
+
+const PAYMENT_METHODS = [
+  { key:'KBZPay',   label:'KBZ Pay',   color:'#1a56c4', abbr:'KBZ', logo:'kbz.jpg'      },
+  { key:'CBPay',    label:'CB Pay',    color:'#1a7ef5', abbr:'CB',  logo:'cb.jpg'       },
+  { key:'WavePay',  label:'Wave Pay',  color:'#e6b800', abbr:'WV',  logo:'wave.jpg'     },
+  { key:'AYAPay',   label:'AYA Pay',   color:'#cc0000', abbr:'AYA', logo:'aya.jpg'      },
+  { key:'OKDollar', label:'OK Dollar', color:'#d4a000', abbr:'OK',  logo:'ok.jpg'       },
+  { key:'MPitesan', label:'M-Pitesan', color:'#cc0000', abbr:'MPI', logo:'mpitesan.jpg' },
+  { key:'MytelPay', label:'Mytel Pay', color:'#d4007a', abbr:'MYT', logo:'mytelpay.jpg' },
+];
+
+let currentUser = null, currentProfile = null, allTransactions = [], txFilterActive = 'All';
+
+function getDeviceId() {
+  let id = localStorage.getItem('txpro_device_id');
+  if (!id) { id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2,10); localStorage.setItem('txpro_device_id', id); }
+  return id;
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+function showToast(title, msg='', type='success', duration=3500) {
+  const icons = {success:'✅', error:'❌', info:'ℹ️'};
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span><div class="toast-content"><div class="toast-title">${title}</div>${msg?`<div class="toast-msg">${msg}</div>`:''}</div>`;
+  document.getElementById('toast-container').prepend(el);
+  setTimeout(() => { el.classList.add('hiding'); setTimeout(() => el.remove(), 250); }, duration);
+}
+
+function fmt(n, d=2) {
+  if (n===null||n===undefined||isNaN(n)) return '0.00';
+  return Number(n).toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d});
+}
+
+async function init() {
+  showScreen('loading');
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { showScreen('login'); return; }
+    currentUser = session.user;
+    await loadProfile();
+    if (!currentProfile) { await sb.auth.signOut(); showScreen('login'); return; }
+    const deviceId = getDeviceId();
+    if (currentProfile.device_id && currentProfile.device_id !== deviceId) {
+      await sb.auth.signOut(); showScreen('login');
+      const e = document.getElementById('login-error');
+      e.textContent = 'This account is logged in on another device. Contact Admin to reset.';
+      e.classList.add('visible'); return;
+    }
+    setupApp(); showScreen('app');
+  } catch(err) { console.error('Init error:', err); showScreen('login'); }
+}
+
+async function loadProfile() {
+  const { data } = await sb.from('users_profile').select('*').eq('id', currentUser.id).single();
+  currentProfile = data;
+}
+
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const username = document.getElementById('login-username').value.trim().toLowerCase();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('btn-login');
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('visible');
+  if (!username||!password) { errEl.textContent='Username and password are required.'; errEl.classList.add('visible'); return; }
+  btn.classList.add('loading'); btn.disabled = true;
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email:`${username}@txapp.internal`, password });
+    if (error) throw new Error('Invalid username or password.');
+    currentUser = data.user;
+    await loadProfile();
+    if (!currentProfile) throw new Error('Profile not found. Contact Admin.');
+    const deviceId = getDeviceId();
+    const { data: result, error: devErr } = await sb.rpc('register_device_session', { p_user_id:currentUser.id, p_device_id:deviceId });
+    if (devErr) throw devErr;
+    if (!result.allowed) { await sb.auth.signOut(); throw new Error('This account is already logged in on another device. Contact Admin to unlock.'); }
+    setupApp(); showScreen('app');
+  } catch(err) { errEl.textContent=err.message; errEl.classList.add('visible'); }
+  finally { btn.classList.remove('loading'); btn.disabled=false; }
+});
+
+document.getElementById('login-password').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('btn-login').click(); });
+
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  if (!confirm('ထွက်မည်လား?')) return;
+  await sb.from('users_profile').update({device_id:null}).eq('id', currentUser.id);
+  await sb.auth.signOut();
+  currentUser=null; currentProfile=null; showScreen('login');
+});
+
+function setupApp() {
+  if (currentProfile?.role==='admin') document.getElementById('tab-admin-btn').style.display='';
+  setupTabs(); setupPaymentDropdown(); setupForm(); setupFilters();
+  loadDashboard(); loadTransactions();
+  if (currentProfile?.role==='admin') loadAdminUserProfit();
+  const now = new Date();
+  document.getElementById('today-date-display').textContent = now.toLocaleDateString('my-MM', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('month-label').textContent = now.toLocaleDateString('en-US', {month:'long',year:'numeric'});
+  scheduleMidnightRefresh(); setupRealtime();
+}
+
+function setupTabs() {
+  document.querySelectorAll('.tab-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const target = item.dataset.tab;
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+      item.classList.add('active');
+      document.getElementById('tab-'+target).classList.add('active');
+      if (target==='dashboard') loadDashboard();
+      if (target==='transactions') { allTransactions=[]; loadTransactions(); }
+      if (target==='admin' && currentProfile?.role==='admin') loadAdminUserProfit();
+    });
+  });
+}
+
+function setupPaymentDropdown() {
+  const dropdown = document.getElementById('pay-dropdown');
+  dropdown.innerHTML = PAYMENT_METHODS.map(pm => `
+    <div class="payment-option" data-key="${pm.key}" data-logo="${pm.logo}" data-label="${pm.label}">
+      <img src="${pm.logo}" alt="${pm.label}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0;">
+      <span class="payment-option-name">${pm.label}</span>
+    </div>`).join('');
+  const display=document.getElementById('pay-select-display'), ddEl=document.getElementById('pay-dropdown');
+  const preview=document.getElementById('select-logo-preview'), selectTx=document.getElementById('select-text');
+  const hiddenIn=document.getElementById('form-payment');
+  display.addEventListener('click', () => { ddEl.classList.toggle('open'); display.classList.toggle('open'); });
+  dropdown.querySelectorAll('.payment-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      hiddenIn.value=opt.dataset.key; selectTx.textContent=opt.dataset.label; selectTx.classList.add('chosen');
+      preview.innerHTML=`<img src="${opt.dataset.logo}" style="width:30px;height:30px;border-radius:8px;object-fit:cover;">`;
+      preview.classList.remove('empty'); ddEl.classList.remove('open'); display.classList.remove('open');
+    });
+  });
+  document.addEventListener('click', e => { if (!display.contains(e.target)&&!ddEl.contains(e.target)) { ddEl.classList.remove('open'); display.classList.remove('open'); } });
+}
+
+function setupForm() {
+  const p=document.getElementById('form-principal'), f=document.getElementById('form-fee');
+  function recalc() {
+    const pv=parseFloat(p.value)||0, fv=parseFloat(f.value)||0, fee=pv*fv/100;
+    document.getElementById('calc-fee').textContent='Ks '+fmt(fee);
+    document.getElementById('calc-total').textContent='Ks '+fmt(pv+fee);
+  }
+  p.addEventListener('input', recalc); f.addEventListener('input', recalc);
+}
+
+function setupFilters() {
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('filter-from').value=today;
+  document.getElementById('filter-to').value=today;
+  document.getElementById('btn-filter').addEventListener('click', applyDateFilter);
+}
+
+async function applyDateFilter() {
+  const from=document.getElementById('filter-from').value, to=document.getElementById('filter-to').value;
+  if (!from||!to) { showToast('Please select both dates','','error'); return; }
+  const fromDt=new Date(from+'T00:00:00'), toDt=new Date(to+'T23:59:59.999');
+  const filtered=allTransactions.filter(tx=>{const d=new Date(tx.created_at);return d>=fromDt&&d<=toDt;});
+  document.getElementById('filter-profit').textContent=fmt(filtered.reduce((s,tx)=>s+Number(tx.service_fee_profit||0),0));
+  document.getElementById('filter-count').textContent=`${filtered.length} transaction(s)`;
+  document.getElementById('filter-result').classList.add('visible');
+}
+
+async function loadDashboard() {
+  const {data,error}=await sb.from('transactions').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+  if (error) { showToast('Failed to load','','error'); return; }
+  allTransactions=data||[];
+  const now=new Date(), todayStr=now.toLocaleDateString('en-CA'), monthNum=now.getMonth(), yearNum=now.getFullYear();
+  const todayTxns=allTransactions.filter(tx=>new Date(tx.created_at).toLocaleDateString('en-CA')===todayStr);
+  document.getElementById('today-profit').textContent=fmt(todayTxns.reduce((s,tx)=>s+Number(tx.service_fee_profit||0),0));
+  document.getElementById('today-txn-count').textContent=todayTxns.length;
+  document.getElementById('monthly-profit').textContent=fmt(allTransactions.filter(tx=>{const d=new Date(tx.created_at);return d.getMonth()===monthNum&&d.getFullYear()===yearNum;}).reduce((s,tx)=>s+Number(tx.service_fee_profit||0),0));
+  renderPaymentGrid();
+}
+
+function renderPaymentGrid() {
+  const grid=document.getElementById('payment-grid');
+  grid.innerHTML=PAYMENT_METHODS.map(pm=>{
+    const txns=allTransactions.filter(tx=>tx.payment_method===pm.key);
+    const profit=txns.reduce((s,tx)=>s+Number(tx.service_fee_profit||0),0);
+    return `<div class="payment-card tap-ripple" data-method="${pm.key}">
+      <img src="${pm.logo}" alt="${pm.label}" style="width:42px;height:42px;border-radius:12px;object-fit:cover;flex-shrink:0;">
+      <div class="payment-info"><div class="payment-name">${pm.label}</div><div class="payment-count">${txns.length} transactions</div></div>
+      <div class="payment-amount">Ks ${fmt(profit)}</div><div class="payment-arrow">›</div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.payment-card').forEach(card=>card.addEventListener('click',()=>openDetailModal(card.dataset.method)));
+}
+
+function openDetailModal(method) {
+  const pm=PAYMENT_METHODS.find(p=>p.key===method);
+  const txns=allTransactions.filter(tx=>tx.payment_method===method);
+  document.getElementById('modal-title').textContent=pm.label+' Transactions';
+  document.getElementById('modal-body').innerHTML=txns.length===0
+    ?`<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">No transactions yet</div></div>`
+    :txns.map(tx=>renderTxItem(tx)).join('');
+  document.getElementById('modal-detail').classList.add('open');
+}
+
+document.getElementById('modal-close').addEventListener('click',()=>document.getElementById('modal-detail').classList.remove('open'));
+document.getElementById('modal-detail').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
+
+async function loadTransactions() {
+  if (allTransactions.length===0) {
+    const {data}=await sb.from('transactions').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+    allTransactions=data||[];
+  }
+  renderTxList();
+  document.querySelectorAll('.tx-filter-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      document.querySelectorAll('.tx-filter-chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active'); txFilterActive=chip.dataset.filter; renderTxList();
+    });
+  });
+}
+
+function renderTxList() {
+  const list=document.getElementById('tx-list');
+  const data=txFilterActive==='All'?allTransactions:allTransactions.filter(tx=>tx.payment_method===txFilterActive);
+  if (data.length===0) { list.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">No transactions found</div><div class="empty-sub">မှတ်တမ်းမရှိသေး</div></div>`; return; }
+  list.innerHTML=data.map(tx=>renderTxItem(tx)).join('');
+}
+
+function renderTxItem(tx) {
+  const pm=PAYMENT_METHODS.find(p=>p.key===tx.payment_method);
+  const timeStr=new Date(tx.created_at).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const refBadge=tx.transaction_ref?`<span class="tx-ref">#${tx.transaction_ref}</span>`:'';
+  return `<div class="tx-item">
+    <img src="${pm?.logo||''}" alt="${pm?.label||''}" style="width:40px;height:40px;border-radius:12px;object-fit:cover;flex-shrink:0;">
+    <div class="tx-info">
+      <div class="tx-phone">${tx.receiver_phone}${refBadge}</div>
+      <div class="tx-method">${pm?.label||tx.payment_method}</div>
+      <div class="tx-time">${timeStr}</div>
+    </div>
+    <div class="tx-amounts"><div class="tx-profit">+Ks ${fmt(tx.service_fee_profit)}</div><div class="tx-total">Total: ${fmt(tx.total_payable)}</div></div>
+  </div>`;
+}
+
+document.getElementById('btn-confirm-form').addEventListener('click', async () => {
+  const phone=document.getElementById('form-phone').value.trim();
+  const ref=document.getElementById('form-ref').value.trim();
+  const payment=document.getElementById('form-payment').value;
+  const principal=parseFloat(document.getElementById('form-principal').value);
+  const fee=parseFloat(document.getElementById('form-fee').value);
+  const btn=document.getElementById('btn-confirm-form');
+  if (!phone||!ref||!payment||isNaN(principal)||principal<=0||isNaN(fee)||fee<0) {
+    showToast('ထည့်သွင်းချက် မပြည့်မစုံ','ကွက်လပ်များ အားလုံး ဖြည့်ပါ','error'); return;
+  }
+  btn.disabled=true;
+  btn.innerHTML='<span style="display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite"></span>';
+  const now=new Date();
+  const timestamp=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+  const {error}=await sb.from('transactions').insert({user_id:currentUser.id,receiver_phone:phone,transaction_ref:ref,payment_method:payment,principal_amount:principal,fee_percentage:fee,created_at:now.toISOString()});
+  btn.disabled=false; btn.innerHTML='✓ Confirm';
+  if (error) { showToast('Transaction failed',error.message,'error'); }
+  else { showToast('အောင်မြင်ပါသည်! 🎉',`Transaction recorded at ${timestamp}`,'success'); resetForm(); allTransactions=[]; loadDashboard(); }
+});
+
+document.getElementById('btn-cancel-form').addEventListener('click',()=>{if(confirm('ပယ်ဖျက်မည်လား?'))resetForm();});
+
+function resetForm() {
+  ['form-phone','form-ref','form-principal','form-fee'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('form-payment').value='';
+  document.getElementById('calc-fee').textContent='Ks 0.00';
+  document.getElementById('calc-total').textContent='Ks 0.00';
+  document.getElementById('select-text').textContent='Select payment method';
+  document.getElementById('select-text').classList.remove('chosen');
+  const preview=document.getElementById('select-logo-preview');
+  preview.innerHTML=''; preview.classList.add('empty');
+}
+
+document.getElementById('btn-device-reset').addEventListener('click', async () => {
+  const username=document.getElementById('reset-username').value.trim();
+  const errEl=document.getElementById('reset-error');
+  const btn=document.getElementById('btn-device-reset');
+  errEl.classList.remove('visible');
+  if (!username) { errEl.textContent='Username ထည့်ပါ'; errEl.classList.add('visible'); return; }
+  btn.classList.add('loading'); btn.disabled=true;
+  const {data,error}=await sb.from('users_profile').update({device_id:null}).eq('username',username).select();
+  btn.classList.remove('loading'); btn.disabled=false;
+  if (error) { errEl.textContent='Error: '+error.message; errEl.classList.add('visible'); }
+  else if (!data||data.length===0) { errEl.textContent='Username မတွေ့ဘူး'; errEl.classList.add('visible'); }
+  else { document.getElementById('reset-username').value=''; showToast('Device Reset ပြီးပါပြီ ✅',username+' device lock ဖြုတ်ပြီ','success'); }
+});
+
+async function loadAdminUserProfit() {
+  if (currentProfile?.role!=='admin') return;
+  const listEl=document.getElementById('admin-user-profit-list');
+  const {data:users,error}=await sb.from('users_profile').select('id,username,role,device_id').order('created_at',{ascending:true});
+  if (error||!users) { listEl.innerHTML=`<div class="empty-state"><div class="empty-text">Error loading</div></div>`; return; }
+  const now=new Date(), todayStr=now.toLocaleDateString('en-CA');
+  const fromDt=new Date(todayStr+'T00:00:00').toISOString(), toDt=new Date(todayStr+'T23:59:59').toISOString();
+  const profitMap={};
+  await Promise.all(users.map(async u=>{
+    const {data:txns}=await sb.from('transactions').select('service_fee_profit').eq('user_id',u.id).gte('created_at',fromDt).lte('created_at',toDt);
+    profitMap[u.id]=(txns||[]).reduce((s,t)=>s+Number(t.service_fee_profit||0),0);
+  }));
+  listEl.innerHTML=users.map(u=>`
+    <div class="user-row">
+      <div class="user-avatar">${u.username?.[0]?.toUpperCase()||'?'}</div>
+      <div class="user-info"><div class="user-name">${u.username}</div><div class="user-device">${u.device_id?'📱 Device locked':'🔓 No device'}</div></div>
+      <span class="user-role-badge ${u.role}">${u.role}</span>
+      <div style="text-align:right"><div style="font-size:14px;color:var(--green);font-weight:800">Ks ${fmt(profitMap[u.id])}</div><div style="font-size:10px;color:var(--text3)">ယနေ့</div></div>
+    </div>`).join('');
+}
+
+function scheduleMidnightRefresh() {
+  const now=new Date(), next=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,1);
+  setTimeout(()=>{loadDashboard();scheduleMidnightRefresh();},next-now);
+}
+
+function setupRealtime() {
+  try {
+    sb.channel('txpro:'+currentUser.id)
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'transactions',filter:`user_id=eq.${currentUser.id}`},payload=>{
+        allTransactions.unshift(payload.new);
+        if (document.getElementById('tab-dashboard').classList.contains('active')) loadDashboard();
+      }).subscribe();
+  } catch(e) { console.log('Realtime:', e); }
+}
+
+init();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(()=>console.log('SW registered'))
+    .catch(e=>console.log('SW error',e));
+}
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-const CACHE = 'txpro-v2';
+const CACHE_VERSION = 'txpro-v' + Date.now();
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -8,11 +8,14 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.map(k => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  // Network first — always get fresh content
+  e.respondWith(
+    fetch(e.request, { cache: 'no-cache' })
+      .catch(() => caches.match(e.request))
+  );
 });

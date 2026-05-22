@@ -535,6 +535,11 @@ function fmt(n, d=2) {
 
 async function init() {
   showScreen('loading');
+  
+  const loadingTimeout = setTimeout(() => {
+    showScreen('login');
+  }, 8000);
+  
   try {
     let { data: { session } } = await sb.auth.getSession();
 if (!session) {
@@ -552,8 +557,9 @@ if (!session) { showScreen('login'); return; }
       e.textContent = 'This account is logged in on another device. Contact Admin to reset.';
       e.classList.add('visible'); return;
     }
+    clearTimeout(loadingTimeout);
     setupApp(); showScreen('app');
-  } catch(err) { console.error('Init error:', err); showScreen('login'); }
+  } catch(err) { clearTimeout(loadingTimeout); console.error('Init error:', err); showScreen('login'); }
 }
 
 async function loadProfile() {

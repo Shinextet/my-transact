@@ -493,7 +493,13 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
-  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'txpro_session' }
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storageKey: 'txpro_session',
+    detectSessionInUrl: false,
+    flowType: 'implicit'
+  }
 });
 
 const PAYMENT_METHODS = [
@@ -544,6 +550,14 @@ async function init() {
     let { data: { session } } = await sb.auth.getSession();
 if (!session) {
   const { data: refreshed } = await sb.auth.refreshSession();
+  // Auth state change listener — auto refresh
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_OUT' || !session) {
+    showScreen('login');
+  } else if (event === 'TOKEN_REFRESHED') {
+    currentUser = session.user;
+  }
+});
   session = refreshed.session;
 }
 if (!session) { showScreen('login'); return; }

@@ -536,8 +536,12 @@ function fmt(n, d=2) {
 async function init() {
   showScreen('loading');
   try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { showScreen('login'); return; }
+    let { data: { session } } = await sb.auth.getSession();
+if (!session) {
+  const { data: refreshed } = await sb.auth.refreshSession();
+  session = refreshed.session;
+}
+if (!session) { showScreen('login'); return; }
     currentUser = session.user;
     await loadProfile();
     if (!currentProfile) { await sb.auth.signOut(); showScreen('login'); return; }
